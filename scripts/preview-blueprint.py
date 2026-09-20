@@ -16,9 +16,9 @@ renders exactly the text the blueprint ships, not a convenient variant of it.
 from __future__ import annotations
 
 import argparse
+import ast
 import asyncio
 from datetime import UTC, datetime, timedelta, timezone
-import json
 from pathlib import Path
 import sys
 
@@ -158,12 +158,27 @@ async def main() -> int:
         missed=sum(1 for call in calls if call["type"] == "missed"),
     )
 
+    # Parse it exactly as Home Assistant does. A templated service field is
+    # rendered to a string and then passed through ast.literal_eval; if that
+    # fails it stays a string, and `opendisplay.drawcustom` rejects it with
+    # "expected list at 'payload'". literal_eval is *Python* syntax, so the
+    # payload must say True/False/None, never JSON's true/false/null -- which
+    # is why this does not simply use json.loads: JSON would accept a payload
+    # that Home Assistant then refuses.
     try:
-        elements = json.loads(rendered)
-    except json.JSONDecodeError as err:
-        print(f"payload is not valid JSON: {err}", file=sys.stderr)  # noqa: T201
+        elements = ast.literal_eval(rendered)
+    except (ValueError, SyntaxError, MemoryError) as err:
+        print(f"Home Assistant could not parse this payload: {err}", file=sys.stderr)  # noqa: T201
+        print("hint: use Python literals (True/False/None), not true/false/null", file=sys.stderr)  # noqa: T201
         for number, line in enumerate(rendered.splitlines(), 1):
             print(f"{number:3} {line}", file=sys.stderr)  # noqa: T201
+        return 1
+
+    if not isinstance(elements, list):
+        print(  # noqa: T201
+            f"payload parsed as {type(elements).__name__}, but drawcustom requires a list",
+            file=sys.stderr,
+        )
         return 1
 
     image = await generate_image(

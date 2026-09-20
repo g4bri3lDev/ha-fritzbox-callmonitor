@@ -117,6 +117,14 @@ get wrong:
   commas are immune to which branches fire.
 - **It may only use Home Assistant template functions.** `now`, `timedelta`,
   `as_timestamp` and `timestamp_custom` are available; custom filters are not.
+- **Python literals, never JSON literals.** Write `True`/`False`/`None`, not
+  `true`/`false`/`null`. Home Assistant renders a templated service field to a
+  string and then runs `ast.literal_eval` on it; that is *Python* syntax, so a
+  JSON `true` makes the parse fail, the field stays a string, and
+  `opendisplay.drawcustom` (schema `vol.Required("payload"): list`) rejects the
+  call with `expected list at 'payload'`. The payload therefore looks like JSON
+  but is not JSON -- do not "fix" it by validating with `json.loads`, which
+  accepts payloads Home Assistant refuses.
 
 `scripts/preview-blueprint.py` renders the blueprint's own payload to a PNG with
 sample data and no Home Assistant, reimplementing those four helpers so it
