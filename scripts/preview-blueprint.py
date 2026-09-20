@@ -216,6 +216,12 @@ async def main() -> int:
         action="store_true",
         help="also save a BWRY-dithered simulation of what the tag shows",
     )
+    parser.add_argument(
+        "--font",
+        default="ppb.ttf",
+        help="font for the render; an absolute path is used directly, so a"
+        " font that is not installed in Home Assistant can still be previewed",
+    )
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
 
@@ -234,6 +240,7 @@ async def main() -> int:
     rendered = environment.from_string(payload).render(
         calls=calls,
         missed=sum(1 for call in calls if call["type"] == "missed"),
+        font=args.font,
     )
 
     # Parse it exactly as Home Assistant does. A templated service field is

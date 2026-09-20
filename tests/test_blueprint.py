@@ -58,8 +58,46 @@ def _render(hass: HomeAssistant, payload: str, calls: list[dict]) -> Any:
 
 def test_the_blueprint_is_valid_yaml(blueprint: dict[str, Any]) -> None:
     """A broken block scalar silently swallows the template."""
+    inputs = blueprint["blueprint"]["input"]
+
     assert blueprint["blueprint"]["domain"] == "automation"
-    assert set(blueprint["blueprint"]["input"]) == {"call_history", "displays"}
+    assert {"call_history", "displays"} <= set(inputs)
+
+
+def test_every_optional_input_has_a_default(blueprint: dict[str, Any]) -> None:
+    """Only the sensor and the displays may be required of the user.
+
+    Anything else must work unconfigured, or importing the blueprint turns into
+    a questionnaire.
+    """
+    inputs = blueprint["blueprint"]["input"]
+    optional = set(inputs) - {"call_history", "displays"}
+
+    missing = [name for name in optional if "default" not in inputs[name]]
+
+    assert not missing, f"optional inputs without a default: {missing}"
+
+
+def test_the_font_defaults_to_a_bundled_one(blueprint: dict[str, Any]) -> None:
+    """A default of anything else would be broken on every fresh install.
+
+    Only ppb.ttf and rbm.ttf ship with the renderer; the repository
+    deliberately contains no font files of its own.
+    """
+    assert blueprint["blueprint"]["input"]["font"]["default"] in ("ppb.ttf", "rbm.ttf")
+
+
+def test_the_repository_ships_no_font_files() -> None:
+    """A font is the user's licence to hold, not ours to redistribute."""
+    repo = Path(__file__).parents[1]
+    fonts = [
+        path
+        for pattern in ("**/*.ttf", "**/*.otf", "**/*.woff", "**/*.woff2")
+        for path in repo.glob(pattern)
+        if ".venv" not in path.parts and ".git" not in path.parts
+    ]
+
+    assert not fonts, f"font files in the repository: {fonts}"
 
 
 async def test_the_payload_renders_to_a_list(hass: HomeAssistant, payload: str) -> None:

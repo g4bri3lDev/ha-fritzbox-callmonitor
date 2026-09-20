@@ -133,6 +133,11 @@ get wrong:
   "23:50" and start saying "Gestern". For the same reason the header carries
   the date rather than a clock: a clock redrawn daily would sit there lying,
   while a date that is not today is a useful sign that something is stuck.
+- **Never commit a font.** The blueprint takes a font by *name*, and the repo
+  ships none. `ppb.ttf` (Poppins Bold) and `rbm.ttf` (Roboto Medium) come from
+  odl-renderer. Anything else is the user's own licence to hold: Gotham, for
+  one, is a commercial typeface, and putting the file in a public repository
+  would be redistributing it.
 - **Say where a name came from.** `name_source` distinguishes the user's own
   phonebook from a directory's guess, and the blueprint marks the latter with a
   globe. Treating the two as interchangeable on screen is how a wrong lookup

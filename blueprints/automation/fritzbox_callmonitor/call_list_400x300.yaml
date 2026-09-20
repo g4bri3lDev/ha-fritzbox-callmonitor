@@ -22,6 +22,16 @@ blueprint:
           filter:
             - integration: fritzbox_callmonitor
               domain: sensor
+    font:
+      name: Font
+      description: >-
+        Font file for all text. `ppb.ttf` and `rbm.ttf` ship with the renderer
+        and always work. Any other file must be put in `/config/www/fonts/`,
+        `/config/media/fonts/` or `/media/fonts/` first, or given as an absolute
+        path. An unknown font silently falls back to `ppb.ttf`.
+      default: "ppb.ttf"
+      selector:
+        text:
     displays:
       name: Displays
       description: One or more 400x300 OpenDisplay tags to draw on.
@@ -35,6 +45,7 @@ mode: single
 max_exceeded: silent
 
 variables:
+  font: !input font
   call_history: !input call_history
   calls: "{{ state_attr(call_history, 'calls') or [] }}"
   missed: "{{ state_attr(call_history, 'missed_calls') or 0 }}"
@@ -68,18 +79,18 @@ actions:
         [
           {"type": "rectangle", "x_start": 0, "y_start": 0, "x_end": 400, "y_end": 42, "fill": "black"}
           ,{"type": "icon", "value": "mdi:phone-log", "x": 14, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
-          ,{"type": "text", "value": "Anrufe", "x": 46, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "Anrufe", "x": 46, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
           {# Not red: the panel's red ink is a dark maroon and only reaches 1.45:1
              against the black bar, so it all but disappears. Yellow manages 5.57:1
              and still reads as an alert; white is the plain state. Red keeps its
              meaning in the rows below, where it sits on white at 6.4:1. #}
           {% set alert = 'yellow' if missed else 'white' %}
           ,{"type": "icon", "value": "mdi:phone-missed", "x": 262, "y": 21, "size": 18, "color": "{{ alert }}", "anchor": "lm"}
-          ,{"type": "text", "value": "{{ missed }}", "x": 286, "y": 21, "size": 20, "color": "{{ alert }}", "anchor": "lm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "{{ missed }}", "x": 286, "y": 21, "size": 20, "color": "{{ alert }}", "anchor": "lm"}
           {# Today's date, not a clock: the frame is only redrawn daily or on a call,
              so a clock would sit there lying. The date doubles as a staleness
              check -- if it is not today, the display or the integration is stuck. #}
-          ,{"type": "text", "value": "{{ now().strftime('%d.%m.') }}", "x": 386, "y": 21, "size": 15, "color": "white", "anchor": "rm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "{{ now().strftime('%d.%m.') }}", "x": 386, "y": 21, "size": 15, "color": "white", "anchor": "rm"}
 
           {% set today = now().strftime('%Y-%m-%d') %}
           {% set yesterday = (now() - timedelta(days=1)).strftime('%Y-%m-%d') %}
@@ -113,7 +124,7 @@ actions:
           {% endif %}
 
           ,{"type": "icon", "value": "{{ call.icon }}", "x": 18, "y": {{ mid }}, "size": 22, "color": "{{ tone }}", "anchor": "lm"}
-          ,{"type": "text", "value": "{{ call.name or call.number }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": True}
+          ,{"type": "text", "font": "{{ font }}", "value": "{{ call.name or call.number }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": True}
           {# A withheld caller has no number at all: the box leaves it empty and
              puts its own placeholder in the name, so printing the number here
              would leave a blank line. Seen on 3 of 16 real calls.
@@ -124,25 +135,25 @@ actions:
           {% if looked_up %}
           ,{"type": "icon", "value": "mdi:earth", "x": 48, "y": {{ mid + 12 }}, "size": 12, "color": "black", "anchor": "lm"}
           {% endif %}
-          ,{"type": "text", "value": "{{ call.number }}", "x": {{ number_x }}, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": {{ 266 - (number_x - 48) }}, "truncate": True}
+          ,{"type": "text", "font": "{{ font }}", "value": "{{ call.number }}", "x": {{ number_x }}, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": {{ 258 - (number_x - 48) }}, "truncate": True}
           {% elif not call.number %}
-          ,{"type": "text", "value": "Nummer unterdrückt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "Nummer unterdrückt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
           {% endif %}
 
           {% if spam %}
           ,{"type": "rectangle", "x_start": 296, "y_start": {{ mid - 19 }}, "x_end": 340, "y_end": {{ mid - 1 }}, "fill": "yellow", "outline": "yellow", "corners": "all", "radius": 4}
-          ,{"type": "text", "value": "SPAM", "x": 318, "y": {{ mid - 10 }}, "size": 12, "color": "black", "anchor": "mm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "SPAM", "x": 318, "y": {{ mid - 10 }}, "size": 12, "color": "black", "anchor": "mm"}
           {% endif %}
 
-          ,{"type": "text", "value": "{% if day == today %}{{ stamp | timestamp_custom('%H:%M') }}{% elif day == yesterday %}Gestern{% else %}{{ stamp | timestamp_custom('%d.%m.') }}{% endif %}", "x": 386, "y": {{ mid - 9 }}, "size": 17, "anchor": "rm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "{% if day == today %}{{ stamp | timestamp_custom('%H:%M') }}{% elif day == yesterday %}Gestern{% else %}{{ stamp | timestamp_custom('%d.%m.') }}{% endif %}", "x": 386, "y": {{ mid - 9 }}, "size": 17, "anchor": "rm"}
           {# Duration underneath the date. A missed call has none, so the slot shows
              the clock time instead -- otherwise an older missed call would show a
              date with no indication of when it actually rang. #}
-          ,{"type": "text", "value": "{% if call.duration %}{{ call.duration // 60 }}:{{ '%02d' | format(call.duration % 60) }}{% elif day != today %}{{ stamp | timestamp_custom('%H:%M') }}{% else %}—{% endif %}", "x": 386, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "rm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "{% if call.duration %}{{ call.duration // 60 }}:{{ '%02d' | format(call.duration % 60) }}{% elif day != today %}{{ stamp | timestamp_custom('%H:%M') }}{% else %}—{% endif %}", "x": 386, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "rm"}
           {% endfor %}
 
           {% if not calls %}
           ,{"type": "icon", "value": "mdi:phone-off", "x": "50%", "y": 150, "size": 40, "color": "gray", "anchor": "mm"}
-          ,{"type": "text", "value": "Keine Anrufe", "x": "50%", "y": 196, "size": 20, "color": "gray", "anchor": "mm"}
+          ,{"type": "text", "font": "{{ font }}", "value": "Keine Anrufe", "x": "50%", "y": 196, "size": 20, "color": "gray", "anchor": "mm"}
           {% endif %}
         ]

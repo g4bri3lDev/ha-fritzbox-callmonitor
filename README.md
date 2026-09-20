@@ -58,7 +58,13 @@ icon: mdi:phone-missed
 A ready-made blueprint for a **400x300 BWRY** tag ships in
 [`blueprints/automation/fritzbox_callmonitor/call_list_400x300.yaml`](blueprints/automation/fritzbox_callmonitor/call_list_400x300.yaml).
 Copy it into `config/blueprints/automation/` and create an automation from it —
-it asks for the call history sensor and one or more displays, and nothing else.
+it asks for the call history sensor, the displays, and optionally a font.
+
+The bundled `ppb.ttf` (Poppins Bold) and `rbm.ttf` (Roboto Medium) always work.
+Any other font has to be placed in `/config/www/fonts/`, `/config/media/fonts/`
+or `/media/fonts/` on your Home Assistant first — an absolute path works too.
+A font that cannot be found falls back to `ppb.ttf` with a warning, so a typo
+shows up as "nothing changed" rather than an error.
 
 ![Call list on a 400x300 display](docs/images/call-list-400x300.png)
 
