@@ -30,7 +30,29 @@ import yaml
 # The 4.1" tag is a BWRY panel: four inks, no grey. Anything else in the
 # payload has to be dithered to these, which is what makes a 1px "ltgray"
 # hairline disappear on the hardware while looking perfect in the PNG.
-BWRY = [(255, 255, 255), (0, 0, 0), (255, 0, 0), (255, 255, 0)]
+#
+# These are the *measured* ink colours for the panel, from py-opendisplay's
+# DISPLAY_PALETTE_MAP (panel 0x0037, ColorScheme.BWRY) -- not idealised sRGB.
+# The difference matters: e-paper white is a light grey and the red is a dark
+# maroon, so red on black manages only 1.45:1 while yellow manages 5.57:1.
+# Simulating with pure (255, 0, 0) hides that.
+# Quantising has to happen against the *idealised* colours, because that is
+# how a hue finds the right ink: pure red is Euclidean-nearer the yellow ink
+# than the red one, so measuring distances against measured values turns every
+# red row yellow. Map to the ink afterwards instead.
+IDEAL = [(255, 255, 255), (0, 0, 0), (255, 0, 0), (255, 255, 0)]
+
+# The measured ink colours for this panel, from py-opendisplay's
+# DISPLAY_PALETTE_MAP (panel 0x0037, ColorScheme.BWRY). E-paper white is a
+# light grey and the red is a dark maroon, which is the whole point of
+# previewing with them: red reaches only 1.45:1 against black, yellow 5.57:1.
+MEASURED = {
+    (255, 255, 255): (173, 178, 174),
+    (0, 0, 0): (10, 7, 14),
+    (255, 0, 0): (85, 24, 14),
+    (255, 255, 0): (172, 128, 0),
+}
+PAPER_WHITE = MEASURED[(255, 255, 255)]
 
 REPO = Path(__file__).resolve().parents[1]
 BLUEPRINT = REPO / "blueprints/automation/fritzbox_callmonitor/call_list_400x300.yaml"
@@ -149,13 +171,17 @@ def _to_panel(image: Image.Image) -> Image.Image:
     failure it is here to catch: fine detail in a dithered colour.
     """
     palette = Image.new("P", (1, 1))
-    flat = [c for rgb in BWRY for c in rgb] + [0, 0, 0] * (256 - len(BWRY))
+    flat = [c for rgb in IDEAL for c in rgb] + [0, 0, 0] * (256 - len(IDEAL))
     palette.putpalette(flat)
-    return (
+    quantised = (
         image.convert("RGB")
         .quantize(palette=palette, dither=Image.Dither.FLOYDSTEINBERG)
         .convert("RGB")
     )
+    # Now swap each idealised colour for the ink that actually prints it.
+    inked = quantised.copy()
+    inked.putdata([MEASURED.get(px, px) for px in quantised.getdata()])
+    return inked
 
 
 def _report_hairlines(image: Image.Image, panel: Image.Image) -> None:
@@ -169,7 +195,7 @@ def _report_hairlines(image: Image.Image, panel: Image.Image) -> None:
         drawn = [x for x in range(width) if image.getpixel((x, y)) != (255, 255, 255)]
         if len(drawn) < width // 3:
             continue
-        survived = sum(1 for x in drawn if panel.getpixel((x, y)) != (255, 255, 255))
+        survived = sum(1 for x in drawn if panel.getpixel((x, y)) != PAPER_WHITE)
         ratio = survived / len(drawn)
         if ratio < 0.9:
             print(  # noqa: T201

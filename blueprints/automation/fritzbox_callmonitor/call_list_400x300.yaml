@@ -69,8 +69,13 @@ actions:
           {"type": "rectangle", "x_start": 0, "y_start": 0, "x_end": 400, "y_end": 42, "fill": "black"}
           ,{"type": "icon", "value": "mdi:phone-log", "x": 14, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
           ,{"type": "text", "value": "Anrufe", "x": 46, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
-          ,{"type": "icon", "value": "mdi:phone-missed", "x": 262, "y": 21, "size": 18, "color": "red", "anchor": "lm"}
-          ,{"type": "text", "value": "{{ missed }}", "x": 286, "y": 21, "size": 20, "color": "white", "anchor": "lm"}
+          {# Not red: the panel's red ink is a dark maroon and only reaches 1.45:1
+             against the black bar, so it all but disappears. Yellow manages 5.57:1
+             and still reads as an alert; white is the plain state. Red keeps its
+             meaning in the rows below, where it sits on white at 6.4:1. #}
+          {% set alert = 'yellow' if missed else 'white' %}
+          ,{"type": "icon", "value": "mdi:phone-missed", "x": 262, "y": 21, "size": 18, "color": "{{ alert }}", "anchor": "lm"}
+          ,{"type": "text", "value": "{{ missed }}", "x": 286, "y": 21, "size": 20, "color": "{{ alert }}", "anchor": "lm"}
           {# Today's date, not a clock: the frame is only redrawn daily or on a call,
              so a clock would sit there lying. The date doubles as a staleness
              check -- if it is not today, the display or the integration is stuck. #}

@@ -42,7 +42,7 @@ def main() -> int:
     for call in calls:
         print(
             "raw:",
-            {  # noqa: T201
+            {
                 name: getattr(call, name)
                 for name in (
                     "Id",

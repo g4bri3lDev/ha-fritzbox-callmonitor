@@ -133,6 +133,13 @@ get wrong:
   "23:50" and start saying "Gestern". For the same reason the header carries
   the date rather than a clock: a clock redrawn daily would sit there lying,
   while a date that is not today is a useful sign that something is stuck.
+- **Never red on black.** The panel's inks are measured, not idealised: black
+  `(10, 7, 14)`, white `(173, 178, 174)`, yellow `(172, 128, 0)`, red
+  `(85, 24, 14)`. That red is a dark maroon, so against the black header bar it
+  reaches **1.45:1** and all but vanishes, while yellow gets 5.57:1 and white
+  9.29:1. Red is still the right colour for a missed call *in the rows*, where
+  it sits on white at 6.4:1. Ink values come from py-opendisplay's
+  `DISPLAY_PALETTE_MAP` (panel `0x0037`, `ColorScheme.BWRY`).
 - **Fine detail must use a solid ink.** The 4.1" tag is a BWRY panel -- black,
   white, red, yellow, no grey -- and `drawcustom` error-diffusion dithers
   anything else before sending. A 14px grey label survives that; a 1px grey
