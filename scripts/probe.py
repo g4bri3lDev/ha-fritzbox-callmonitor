@@ -20,8 +20,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from fritzconnection import FritzConnection  # noqa: E402
-from fritzconnection.lib.fritzcall import FritzCall  # noqa: E402
+from fritzconnection import FritzConnection
+from fritzconnection.lib.fritzcall import FritzCall
 
 
 def main() -> int:
@@ -40,21 +40,24 @@ def main() -> int:
     print(f"{len(calls)} calls in the last {args.days} days\n")  # noqa: T201
 
     for call in calls:
-        print("raw:", {  # noqa: T201
-            name: getattr(call, name)
-            for name in (
-                "Id",
-                "Type",
-                "Caller",
-                "Called",
-                "CallerNumber",
-                "CalledNumber",
-                "Name",
-                "Device",
-                "Date",
-                "Duration",
-            )
-        })
+        print(
+            "raw:",
+            {  # noqa: T201
+                name: getattr(call, name)
+                for name in (
+                    "Id",
+                    "Type",
+                    "Caller",
+                    "Called",
+                    "CallerNumber",
+                    "CalledNumber",
+                    "Name",
+                    "Device",
+                    "Date",
+                    "Duration",
+                )
+            },
+        )
 
         # Imported here so the raw dump still works if the integration cannot
         # be imported for some reason.

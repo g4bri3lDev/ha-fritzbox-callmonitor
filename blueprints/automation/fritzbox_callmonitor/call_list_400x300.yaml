@@ -84,7 +84,10 @@ actions:
           {% set day = stamp | timestamp_custom('%Y-%m-%d') %}
 
           {% if not loop.first %}
-          ,{"type": "line", "x_start": 18, "x_end": 386, "y_start": {{ top - 4 }}, "fill": "ltgray"}
+          {# A hairline must be a solid palette colour. "ltgray" does not exist on a
+             BWRY panel, so it gets error-diffusion dithered, and a 1px line has no
+             area for the pattern to read as grey: only a tenth of it survives. #}
+          ,{"type": "line", "x_start": 18, "x_end": 386, "y_start": {{ top - 4 }}, "fill": "black"}
           {% endif %}
 
           {% if call.type == 'missed' %}
@@ -97,13 +100,14 @@ actions:
           ,{"type": "text", "value": "{{ call.name or call.number }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": True}
           {# A withheld caller has no number at all: the box leaves it empty and
              puts its own placeholder in the name, so printing the number here
-             would leave a blank line. Seen on 3 of 16 real calls. #}
+             would leave a blank line. Seen on 3 of 16 real calls.
+
+             With no name there is nothing to put here either: the number is
+             already the line above, so a second line would only restate it. #}
           {% if call.number and call.name %}
           ,{"type": "text", "value": "{{ call.number }}", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": 266, "truncate": True}
           {% elif not call.number %}
           ,{"type": "text", "value": "Nummer unterdrückt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
-          {% else %}
-          ,{"type": "text", "value": "Unbekannt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
           {% endif %}
 
           {% if spam %}
@@ -112,7 +116,10 @@ actions:
           {% endif %}
 
           ,{"type": "text", "value": "{% if day == today %}{{ stamp | timestamp_custom('%H:%M') }}{% elif day == yesterday %}Gestern{% else %}{{ stamp | timestamp_custom('%d.%m.') }}{% endif %}", "x": 386, "y": {{ mid - 9 }}, "size": 17, "anchor": "rm"}
-          ,{"type": "text", "value": "{% if call.duration %}{{ call.duration // 60 }}:{{ '%02d' | format(call.duration % 60) }}{% else %}—{% endif %}", "x": 386, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "rm"}
+          {# Duration underneath the date. A missed call has none, so the slot shows
+             the clock time instead -- otherwise an older missed call would show a
+             date with no indication of when it actually rang. #}
+          ,{"type": "text", "value": "{% if call.duration %}{{ call.duration // 60 }}:{{ '%02d' | format(call.duration % 60) }}{% elif day != today %}{{ stamp | timestamp_custom('%H:%M') }}{% else %}—{% endif %}", "x": 386, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "rm"}
           {% endfor %}
 
           {% if not calls %}

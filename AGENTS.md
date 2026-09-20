@@ -126,10 +126,21 @@ get wrong:
   but is not JSON -- do not "fix" it by validating with `json.loads`, which
   accepts payloads Home Assistant refuses.
 
+- **Fine detail must use a solid ink.** The 4.1" tag is a BWRY panel -- black,
+  white, red, yellow, no grey -- and `drawcustom` error-diffusion dithers
+  anything else before sending. A 14px grey label survives that; a 1px grey
+  hairline does not, because it has no area for the dither pattern to average
+  over. Measured on the real layout, a `ltgray` separator kept 1-12% of its
+  pixels. Greys are fine for text, never for hairlines.
+
 `scripts/preview-blueprint.py` renders the blueprint's own payload to a PNG with
 sample data and no Home Assistant, reimplementing those four helpers so it
 renders exactly the shipped text. Run it after touching the template; the images
-in `docs/images/` come from it. The sample data deliberately covers an unknown
+in `docs/images/` come from it. It also dithers every render to the BWRY
+palette and warns about lines that do not survive, because the RGB PNG (and the
+`image.` entity in Home Assistant, which shows the same pre-dither frame) looks
+perfect while the hardware does not; `--panel` saves that simulation. The
+sample data deliberately covers an unknown
 number, a long VIP name, a spam-scored caller, an outgoing call, a withheld
 caller and a name long enough to truncate.
 

@@ -22,14 +22,18 @@ from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 import sys
 
-import yaml
 from jinja2 import Environment
 from odl_renderer import generate_image
+from PIL import Image
+import yaml
+
+# The 4.1" tag is a BWRY panel: four inks, no grey. Anything else in the
+# payload has to be dithered to these, which is what makes a 1px "ltgray"
+# hairline disappear on the hardware while looking perfect in the PNG.
+BWRY = [(255, 255, 255), (0, 0, 0), (255, 0, 0), (255, 255, 0)]
 
 REPO = Path(__file__).resolve().parents[1]
-BLUEPRINT = (
-    REPO / "blueprints/automation/fritzbox_callmonitor/call_list_400x300.yaml"
-)
+BLUEPRINT = REPO / "blueprints/automation/fritzbox_callmonitor/call_list_400x300.yaml"
 
 TZ = timezone(timedelta(hours=1))
 NOW = datetime(2026, 2, 3, 19, 12, tzinfo=TZ)
@@ -129,22 +133,70 @@ def _as_timestamp(value: str) -> float:
     return datetime.fromisoformat(value).timestamp()
 
 
-def _timestamp_custom(value: float, fmt: str = "%Y-%m-%dT%H:%M:%S", local: bool = True) -> str:
+def _timestamp_custom(
+    value: float, fmt: str = "%Y-%m-%dT%H:%M:%S", local: bool = True
+) -> str:
     """Home Assistant's `timestamp_custom`."""
     return datetime.fromtimestamp(value, TZ if local else UTC).strftime(fmt)
+
+
+def _to_panel(image: Image.Image) -> Image.Image:
+    """Approximate what the panel can actually show.
+
+    `drawcustom` dithers with error diffusion before sending, so a colour that
+    is not one of the four inks becomes a pattern of dots. This is not the
+    exact quantiser the firmware uses, but it is close enough to reveal the
+    failure it is here to catch: fine detail in a dithered colour.
+    """
+    palette = Image.new("P", (1, 1))
+    flat = [c for rgb in BWRY for c in rgb] + [0, 0, 0] * (256 - len(BWRY))
+    palette.putpalette(flat)
+    return (
+        image.convert("RGB")
+        .quantize(palette=palette, dither=Image.Dither.FLOYDSTEINBERG)
+        .convert("RGB")
+    )
+
+
+def _report_hairlines(image: Image.Image, panel: Image.Image) -> None:
+    """Warn about rows that are a solid line before dithering but not after."""
+    # Both sides must be RGB, or the comparison against white is meaningless
+    # and every pixel counts as drawn.
+    image = image.convert("RGB")
+    panel = panel.convert("RGB")
+    width, height = image.size
+    for y in range(height):
+        drawn = [x for x in range(width) if image.getpixel((x, y)) != (255, 255, 255)]
+        if len(drawn) < width // 3:
+            continue
+        survived = sum(1 for x in drawn if panel.getpixel((x, y)) != (255, 255, 255))
+        ratio = survived / len(drawn)
+        if ratio < 0.9:
+            print(  # noqa: T201
+                f"  warning: the line at y={y} loses {100 - int(ratio * 100)}% of"
+                " its pixels on a BWRY panel -- use a solid ink, not a grey",
+                file=sys.stderr,
+            )
 
 
 async def main() -> int:
     """Render the blueprint's payload and save it."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--empty", action="store_true", help="render the no-calls state")
+    parser.add_argument(
+        "--empty", action="store_true", help="render the no-calls state"
+    )
+    parser.add_argument(
+        "--panel",
+        action="store_true",
+        help="also save a BWRY-dithered simulation of what the tag shows",
+    )
     parser.add_argument("--out", type=Path)
     args = parser.parse_args()
 
     blueprint = yaml.load(BLUEPRINT.read_text(), Loader=_Loader)
     payload = blueprint["actions"][0]["data"]["payload"]
 
-    environment = Environment(autoescape=False)  # noqa: S701 - rendering JSON, not HTML
+    environment = Environment(autoescape=False)
     environment.filters["timestamp_custom"] = _timestamp_custom
     environment.globals |= {
         "as_timestamp": _as_timestamp,
@@ -169,7 +221,10 @@ async def main() -> int:
         elements = ast.literal_eval(rendered)
     except (ValueError, SyntaxError, MemoryError) as err:
         print(f"Home Assistant could not parse this payload: {err}", file=sys.stderr)  # noqa: T201
-        print("hint: use Python literals (True/False/None), not true/false/null", file=sys.stderr)  # noqa: T201
+        print(
+            "hint: use Python literals (True/False/None), not true/false/null",
+            file=sys.stderr,
+        )
         for number, line in enumerate(rendered.splitlines(), 1):
             print(f"{number:3} {line}", file=sys.stderr)  # noqa: T201
         return 1
@@ -193,6 +248,16 @@ async def main() -> int:
     out = args.out or REPO / "docs/images" / default
     image.save(out)
     print(f"{len(elements)} elements -> {out}")  # noqa: T201
+
+    # Always check, even without --panel: the whole point is that the RGB
+    # render looks fine while the hardware does not.
+    panel = _to_panel(image)
+    _report_hairlines(image, panel)
+    if args.panel:
+        panel_out = out.with_name(out.stem + "-panel" + out.suffix)
+        panel.save(panel_out)
+        print(f"panel simulation -> {panel_out}")  # noqa: T201
+
     return 0
 
 
