@@ -17,3 +17,8 @@ integration and remain under that license:
   custom_components/fritzbox_callmonitor/translations/en.json
 
 See AGENTS.md (CORE_BASELINE) for the upstream commit they were taken from.
+
+The brand assets in custom_components/fritzbox_callmonitor/brand/ are the
+FRITZ! assets published for this integration in the Home Assistant brands
+repository (https://github.com/home-assistant/brands). FRITZ! and FRITZ!Box are
+trademarks of AVM GmbH; this project is not affiliated with or endorsed by AVM.

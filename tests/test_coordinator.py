@@ -18,7 +18,6 @@ from custom_components.fritzbox_callmonitor.const import (
     CONF_HISTORY_LIMIT,
     CONF_LOOKUP_PROVIDER,
     DISCONNECT_REFRESH_DELAY,
-    HISTORY_SCAN_INTERVAL,
     LookupProvider,
 )
 from custom_components.fritzbox_callmonitor.models import CallType, NameSource
@@ -119,17 +118,18 @@ async def test_the_history_window_and_limit_are_applied(
 
 
 async def test_a_failed_refresh_is_reported(
-    hass: HomeAssistant,
     setup_integration: MockConfigEntry,
     mock_fritz: dict[str, MagicMock],
-    freezer: FrozenDateTimeFactory,
 ) -> None:
-    """A box that stops answering marks the data stale rather than crashing."""
+    """A box that stops answering marks the data stale rather than crashing.
+
+    Refreshed directly rather than by advancing the clock: waiting on the poll
+    schedule also waits on the coordinator's debouncer and an executor job, and
+    a loaded CI runner does not guarantee both have finished by the assertion.
+    """
     mock_fritz["call"].get_calls.side_effect = FritzConnectionException("nope")
 
-    freezer.tick(HISTORY_SCAN_INTERVAL)
-    async_fire_time_changed(hass)
-    await hass.async_block_till_done()
+    await _coordinator(setup_integration).async_refresh()
 
     assert _coordinator(setup_integration).last_update_success is False
 

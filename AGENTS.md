@@ -125,6 +125,15 @@ in `docs/images/` come from it. The sample data deliberately covers an unknown
 number, a long VIP name, a spam-scored caller, an outgoing call and a name long
 enough to truncate.
 
+## Brand assets
+
+`custom_components/fritzbox_callmonitor/brand/` exists because the HACS brands
+check looks for a *custom* integration of this domain in the brands repository,
+and `fritzbox_callmonitor` is listed there as a **core** integration instead --
+so the lookup fails and the check falls back to local assets. They are the same
+FRITZ! images the brands repository publishes for this integration. Do not
+remove them: the HACS workflow fails without them.
+
 ## Testing
 
 `pytest-homeassistant-custom-component`. `tests/conftest.py` mocks only the
