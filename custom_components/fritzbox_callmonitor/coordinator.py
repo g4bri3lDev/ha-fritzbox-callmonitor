@@ -42,6 +42,7 @@ class FritzBoxCallHistoryCoordinator(DataUpdateCoordinator[list[CallRecord]]):
         connection: FritzConnection,
         phonebook: FritzBoxPhonebook,
         lookup: NumberLookup,
+        region: str,
         history_days: int,
         history_limit: int,
     ) -> None:
@@ -56,6 +57,7 @@ class FritzBoxCallHistoryCoordinator(DataUpdateCoordinator[list[CallRecord]]):
         self._connection = connection
         self._phonebook = phonebook
         self._lookup = lookup
+        self._region = region
         self._history_days = history_days
         self._history_limit = history_limit
         self._fritz_call: FritzCall | None = None
@@ -81,7 +83,7 @@ class FritzBoxCallHistoryCoordinator(DataUpdateCoordinator[list[CallRecord]]):
             self._fritz_call = FritzCall(fc=self._connection)
 
         calls = self._fritz_call.get_calls(days=self._history_days)
-        records = [CallRecord.from_call(call) for call in calls]
+        records = [CallRecord.from_call(call, self._region) for call in calls]
         records.sort(key=lambda record: record.timestamp, reverse=True)
         return records[: self._history_limit]
 
@@ -134,7 +136,7 @@ class FritzBoxCallHistoryCoordinator(DataUpdateCoordinator[list[CallRecord]]):
 
         def _fetch() -> list[CallRecord]:
             calls = self._fritz_call.get_calls(calltype=call_type, days=days)  # type: ignore[union-attr]
-            records = [CallRecord.from_call(call) for call in calls]
+            records = [CallRecord.from_call(call, self._region) for call in calls]
             records.sort(key=lambda record: record.timestamp, reverse=True)
             return records if limit is None else records[:limit]
 

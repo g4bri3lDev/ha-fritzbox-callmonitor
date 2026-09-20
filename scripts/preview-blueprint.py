@@ -76,8 +76,15 @@ def _record(**overrides: object) -> dict:
         "timestamp": NOW.isoformat(),
         "duration": 0,
         "icon": "mdi:phone-incoming",
+        "number_formatted": "",
     }
     record.update(overrides)
+    # The integration fills this in; the preview has to as well, or the
+    # rendered example would not match what the display shows.
+    sys.path.insert(0, str(REPO))
+    from custom_components.fritzbox_callmonitor.models import format_national
+
+    record["number_formatted"] = format_national(record["number"]) or record["number"]
     return record
 
 
@@ -88,13 +95,13 @@ SAMPLE = [
     _record(
         id="9",
         type="missed",
-        number="+4930555123456",
+        number="030555123456",
         icon="mdi:phone-missed",
         timestamp=(NOW - timedelta(minutes=18)).isoformat(),
     ),
     _record(
         id="8",
-        number="+498912345",
+        number="08711234567",
         name="Dr. Weber Zahnarztpraxis",
         name_source="phonebook",
         vip=True,
@@ -104,7 +111,7 @@ SAMPLE = [
     _record(
         id="7",
         type="missed",
-        number="+4932221099887",
+        number="032221099887",
         name="Gewinnspiel Service",
         name_source="tellows",
         spam_score=8,
@@ -114,7 +121,7 @@ SAMPLE = [
     _record(
         id="6",
         type="outgoing",
-        number="+4915112345678",
+        number="015112345678",
         name="Mama",
         name_source="phonebook",
         icon="mdi:phone-outgoing",
@@ -134,7 +141,7 @@ SAMPLE = [
     ),
     _record(
         id="5",
-        number="+498998765",
+        number="0870498765",
         name="Hausverwaltung Meier GmbH",
         name_source="dasoertliche",
         duration=95,

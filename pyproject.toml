@@ -10,6 +10,7 @@ requires-python = ">=3.14.2"
 # Home Assistant itself, which the test dependency groups pin transitively.
 dependencies = [
     "fritzconnection[qr]==1.15.1",
+    "phonenumbers==9.0.39",
 ]
 
 [dependency-groups]

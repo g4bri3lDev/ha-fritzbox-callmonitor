@@ -17,8 +17,9 @@ import re
 from typing import Any
 
 from homeassistant.util import dt as dt_util
+import phonenumbers
 
-from .const import REGEX_NUMBER
+from .const import DEFAULT_REGION, REGEX_NUMBER
 
 
 class CallType(StrEnum):
@@ -79,6 +80,7 @@ class CallRecord:
     device: str
     timestamp: datetime
     duration: int
+    number_formatted: str = ""
     name: str | None = None
     name_source: NameSource = NameSource.UNKNOWN
     vip: bool = False
@@ -117,6 +119,7 @@ class CallRecord:
             "id": self.id,
             "type": str(self.type),
             "number": self.number,
+            "number_formatted": self.number_formatted or self.number,
             "own_number": self.own_number,
             "name": self.name,
             "name_source": str(self.name_source),
@@ -129,7 +132,7 @@ class CallRecord:
         }
 
     @classmethod
-    def from_call(cls, call: Any) -> CallRecord:
+    def from_call(cls, call: Any, region: str = DEFAULT_REGION) -> CallRecord:
         """Build a record from a `fritzconnection` `Call`."""
         call_type = CALL_TYPES.get(
             _as_int(getattr(call, "Type", None)), CallType.UNKNOWN
@@ -153,6 +156,7 @@ class CallRecord:
             type=call_type,
             number=number,
             own_number=own_number,
+            number_formatted=format_national(number, region),
             device=_as_str(getattr(call, "Device", None)),
             timestamp=_as_datetime(call),
             duration=_as_duration(call),
@@ -172,6 +176,32 @@ def normalize_number(number: str | None) -> str:
     if not number:
         return ""
     return re.sub(REGEX_NUMBER, "", str(number))
+
+
+def format_national(number: str | None, region: str = DEFAULT_REGION) -> str:
+    """Return a number spaced the way it is dialled, e.g. "08704 261".
+
+    German area codes run from two to five digits, so the split cannot be done
+    by slicing -- 0173 8706416, 0871 7078927 and 08704 261 all differ. Falls
+    back to the raw number for anything unparseable, so the caller always has
+    something to show.
+    """
+    if not number:
+        return ""
+    try:
+        parsed = phonenumbers.parse(number, region)
+    except phonenumbers.NumberParseException:
+        return number
+
+    if not phonenumbers.is_valid_number(parsed):
+        return number
+
+    style = (
+        phonenumbers.PhoneNumberFormat.NATIONAL
+        if phonenumbers.region_code_for_number(parsed) == region
+        else phonenumbers.PhoneNumberFormat.INTERNATIONAL
+    )
+    return phonenumbers.format_number(parsed, style)
 
 
 def national_number(number: str | None, country_code: str = "49") -> str:

@@ -72,6 +72,11 @@ MIN_HISTORY_LIMIT = 1
 # attributes (MAX_STATE_ATTRS_BYTES); ~50 records is roughly 9 KiB.
 MAX_HISTORY_LIMIT = 50
 
+# Region used to format numbers the way they are dialled. Derived from the box
+# itself at setup where possible; this is only the fallback.
+DEFAULT_REGION = "DE"
+FRITZ_ATTR_COUNTRY = "Country"
+
 ATTR_CALLS = "calls"
 ATTR_MISSED_CALLS = "missed_calls"
 ATTR_TOTAL_CALLS = "total_calls"

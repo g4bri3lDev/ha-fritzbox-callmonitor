@@ -138,6 +138,12 @@ get wrong:
   odl-renderer. Anything else is the user's own licence to hold: Gotham, for
   one, is a commercial typeface, and putting the file in a public repository
   would be redistributing it.
+- **`number` stays raw, `number_formatted` is for display.** German area codes
+  run from two to five digits (`030`, `0871`, `01511`, `08704`), so the split
+  cannot be done by slicing and `phonenumbers` does it. Formatting is cosmetic,
+  so anything unparseable or invalid falls back to the raw number rather than
+  erroring or going empty. The region comes from the box's own `Country` field,
+  falling back to `DE`.
 - **Say where a name came from.** `name_source` distinguishes the user's own
   phonebook from a directory's guess, and the blueprint marks the latter with a
   globe. Treating the two as interchangeable on screen is how a wrong lookup

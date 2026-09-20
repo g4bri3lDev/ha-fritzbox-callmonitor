@@ -41,7 +41,8 @@ need `default()`:
 id: "17"
 type: missed          # incoming | missed | outgoing | rejected
                       # | active_incoming | active_outgoing
-number: "+4930111222" # the other party
+number: "+4930111222" # the other party, exactly as the box reported it
+number_formatted: "030 111222"  # the same number, spaced as it is dialled
 own_number: "+4989000"
 name: Max Mustermann  # or null
 name_source: phonebook  # phonebook | fritzbox | dasoertliche | tellows | unknown

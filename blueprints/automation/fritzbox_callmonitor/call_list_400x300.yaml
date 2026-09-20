@@ -124,7 +124,7 @@ actions:
           {% endif %}
 
           ,{"type": "icon", "value": "{{ call.icon }}", "x": 18, "y": {{ mid }}, "size": 22, "color": "{{ tone }}", "anchor": "lm"}
-          ,{"type": "text", "font": "{{ font }}", "value": "{{ call.name or call.number }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": True}
+          ,{"type": "text", "font": "{{ font }}", "value": "{{ call.name or call.number_formatted }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": True}
           {# A withheld caller has no number at all: the box leaves it empty and
              puts its own placeholder in the name, so printing the number here
              would leave a blank line. Seen on 3 of 16 real calls.
@@ -135,7 +135,7 @@ actions:
           {% if looked_up %}
           ,{"type": "icon", "value": "mdi:earth", "x": 48, "y": {{ mid + 12 }}, "size": 12, "color": "black", "anchor": "lm"}
           {% endif %}
-          ,{"type": "text", "font": "{{ font }}", "value": "{{ call.number }}", "x": {{ number_x }}, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": {{ 258 - (number_x - 48) }}, "truncate": True}
+          ,{"type": "text", "font": "{{ font }}", "value": "{{ call.number_formatted }}", "x": {{ number_x }}, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": {{ 258 - (number_x - 48) }}, "truncate": True}
           {% elif not call.number %}
           ,{"type": "text", "font": "{{ font }}", "value": "Nummer unterdrückt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
           {% endif %}

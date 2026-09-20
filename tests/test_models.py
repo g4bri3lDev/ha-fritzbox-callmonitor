@@ -112,6 +112,7 @@ def test_as_dict_always_carries_every_key() -> None:
         "id",
         "type",
         "number",
+        "number_formatted",
         "own_number",
         "name",
         "name_source",
@@ -159,3 +160,47 @@ def test_utc_timestamps_are_converted_to_local(hass: HomeAssistant) -> None:
     record = CallRecord.from_call(AwareCall())
 
     assert record.timestamp.tzinfo is not None
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        # German area codes run from two to five digits, so the split cannot be
+        # done by slicing. All of these came off a real FRITZ!Box.
+        ("08704261", "08704 261"),
+        ("01738706416", "0173 8706416"),
+        ("08717078927", "0871 7078927"),
+        ("087173308", "0871 73308"),
+        ("+4930111222", "030 111222"),
+        ("0049891234567", "089 1234567"),
+    ],
+)
+def test_numbers_are_split_into_area_code_and_subscriber(
+    raw: str, expected: str
+) -> None:
+    """The formatted number is what the display shows."""
+    from custom_components.fritzbox_callmonitor.models import format_national
+
+    assert format_national(raw) == expected
+
+
+def test_a_foreign_number_keeps_its_country_code() -> None:
+    """A Swiss caller must not be rendered as though it were German."""
+    from custom_components.fritzbox_callmonitor.models import format_national
+
+    assert format_national("+41446681800") == "+41 44 668 18 00"
+
+
+@pytest.mark.parametrize("raw", ["", "12345", "not a number", "+99999999999999"])
+def test_an_unformattable_number_is_returned_unchanged(raw: str) -> None:
+    """Formatting is cosmetic; it must never lose or mangle the number."""
+    from custom_components.fritzbox_callmonitor.models import format_national
+
+    assert format_national(raw) == raw
+
+
+def test_the_record_always_offers_something_to_display() -> None:
+    """`number_formatted` falls back to the raw number, never to empty."""
+    record = CallRecord.from_call(FakeCall(type="1", caller="12345"))
+
+    assert record.as_dict()["number_formatted"] == "12345"

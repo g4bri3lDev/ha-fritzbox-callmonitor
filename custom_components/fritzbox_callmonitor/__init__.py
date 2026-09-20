@@ -17,6 +17,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryNotReady
+import phonenumbers
 from requests.exceptions import ConnectionError as RequestsConnectionError
 
 from .base import FritzBoxPhonebook
@@ -30,6 +31,8 @@ from .const import (
     DEFAULT_HISTORY_DAYS,
     DEFAULT_HISTORY_LIMIT,
     DEFAULT_LOOKUP_PROVIDER,
+    DEFAULT_REGION,
+    FRITZ_ATTR_COUNTRY,
     PLATFORMS,
     LookupProvider,
 )
@@ -59,7 +62,21 @@ async def async_setup_entry(
     """Set up the fritzbox_callmonitor platforms."""
     options = config_entry.options
 
-    def _connect() -> tuple[FritzConnection, FritzBoxPhonebook]:
+    def _region(connection: FritzConnection) -> str:
+        """Ask the box which country it is in, for number formatting.
+
+        AVM reports it as a dialling code ("049"). Anything unexpected falls
+        back to the default rather than failing setup over cosmetics.
+        """
+        try:
+            country = connection.updatecheck[FRITZ_ATTR_COUNTRY]
+            region = phonenumbers.region_code_for_country_code(int(country))
+        except KeyError, TypeError, ValueError, FritzConnectionException:
+            return DEFAULT_REGION
+        # region_code_for_country_code returns "ZZ" when it knows of none.
+        return region if region and region != "ZZ" else DEFAULT_REGION
+
+    def _connect() -> tuple[FritzConnection, FritzBoxPhonebook, str]:
         # One TR-064 session, shared by the phonebook and the call list.
         connection = FritzConnection(
             address=config_entry.data[CONF_HOST],
@@ -72,10 +89,12 @@ async def async_setup_entry(
             prefixes=options.get(CONF_PREFIXES),
         )
         phonebook.init_phonebook()
-        return connection, phonebook
+        return connection, phonebook, _region(connection)
 
     try:
-        connection, fritzbox_phonebook = await hass.async_add_executor_job(_connect)
+        connection, fritzbox_phonebook, region = await hass.async_add_executor_job(
+            _connect
+        )
     except FritzSecurityError as ex:
         _LOGGER.error(
             (
@@ -105,6 +124,7 @@ async def async_setup_entry(
         connection=connection,
         phonebook=fritzbox_phonebook,
         lookup=lookup,
+        region=region,
         history_days=options.get(CONF_HISTORY_DAYS, DEFAULT_HISTORY_DAYS),
         history_limit=options.get(CONF_HISTORY_LIMIT, DEFAULT_HISTORY_LIMIT),
     )
