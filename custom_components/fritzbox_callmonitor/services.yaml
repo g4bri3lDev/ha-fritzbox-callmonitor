@@ -1,0 +1,55 @@
+get_calls:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: fritzbox_callmonitor
+    call_type:
+      required: false
+      default: "all"
+      selector:
+        select:
+          translation_key: call_type
+          options:
+            - "all"
+            - "incoming"
+            - "missed"
+            - "outgoing"
+            - "rejected"
+    days:
+      required: false
+      default: 7
+      selector:
+        number:
+          min: 1
+          max: 90
+          step: 1
+          mode: box
+          unit_of_measurement: days
+    limit:
+      required: false
+      selector:
+        number:
+          min: 1
+          max: 500
+          step: 1
+          mode: box
+
+lookup_number:
+  fields:
+    config_entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: fritzbox_callmonitor
+    number:
+      required: true
+      example: "+4930123456"
+      selector:
+        text:
+    force_refresh:
+      required: false
+      default: false
+      selector:
+        boolean:

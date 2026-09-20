@@ -1,0 +1,42 @@
+name: Release Please
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          config-file: .release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # The zip has to be attached here rather than from a workflow listening for
+      # `release: published`. release-please creates the release with GITHUB_TOKEN,
+      # and GitHub does not start workflow runs from events raised by that token, so
+      # such a workflow never fires. hacs.json sets zip_release, meaning HACS installs
+      # from this asset: if it is missing, installing the release fails.
+      - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
+
+      - name: Create zip
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          cd custom_components/fritzbox_callmonitor
+          zip fritzbox_callmonitor.zip -r ./
+
+      - name: Upload zip to release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.release.outputs.tag_name }}" \
+            custom_components/fritzbox_callmonitor/fritzbox_callmonitor.zip --clobber

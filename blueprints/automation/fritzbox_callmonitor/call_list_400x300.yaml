@@ -1,0 +1,113 @@
+blueprint:
+  name: FRITZ!Box call list on a 400x300 display
+  description: >-
+    Draws the five most recent calls on a 400x300 OpenDisplay tag, laid out for
+    a black/white/red/yellow panel: missed calls in red with a red edge marker,
+    phonebook VIP contacts marked in yellow, and a yellow SPAM badge when
+    tellows scored the caller 6 or higher.
+
+    Needs the call history sensor from the fritzbox_callmonitor custom
+    integration -- the one whose state is a timestamp and that carries a `calls`
+    attribute.
+  domain: automation
+  author: g4bri3lDev
+  source_url: https://github.com/g4bri3lDev/ha-fritzbox-callmonitor/blob/main/blueprints/automation/fritzbox_callmonitor/call_list_400x300.yaml
+
+  input:
+    call_history:
+      name: Call history sensor
+      description: The `... Call history ...` sensor of your FRITZ!Box.
+      selector:
+        entity:
+          filter:
+            - integration: fritzbox_callmonitor
+              domain: sensor
+    displays:
+      name: Displays
+      description: One or more 400x300 OpenDisplay tags to draw on.
+      selector:
+        device:
+          filter:
+            - integration: opendisplay
+          multiple: true
+
+mode: single
+max_exceeded: silent
+
+variables:
+  call_history: !input call_history
+  calls: "{{ state_attr(call_history, 'calls') or [] }}"
+  missed: "{{ state_attr(call_history, 'missed_calls') or 0 }}"
+
+triggers:
+  # The sensor's state is the timestamp of the newest call, so it changes
+  # exactly once per call.
+  - trigger: state
+    entity_id: !input call_history
+  - trigger: homeassistant
+    event: start
+  # Keeps the header clock and the "Gestern" labels honest between calls.
+  - trigger: time_pattern
+    minutes: "/30"
+
+conditions:
+  - condition: template
+    value_template: "{{ has_value(call_history) or states(call_history) == 'unknown' }}"
+
+actions:
+  - action: opendisplay.drawcustom
+    target:
+      device_id: !input displays
+    data:
+      background: white
+      rotate: 0
+      payload: >
+        [
+          {"type": "rectangle", "x_start": 0, "y_start": 0, "x_end": 400, "y_end": 42, "fill": "black"}
+          ,{"type": "icon", "value": "mdi:phone-log", "x": 14, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
+          ,{"type": "text", "value": "Anrufe", "x": 46, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
+          ,{"type": "icon", "value": "mdi:phone-missed", "x": 262, "y": 21, "size": 18, "color": "red", "anchor": "lm"}
+          ,{"type": "text", "value": "{{ missed }}", "x": 286, "y": 21, "size": 20, "color": "white", "anchor": "lm"}
+          ,{"type": "text", "value": "{{ now().strftime('%H:%M') }}", "x": 386, "y": 21, "size": 15, "color": "white", "anchor": "rm"}
+
+          {% set today = now().strftime('%Y-%m-%d') %}
+          {% set yesterday = (now() - timedelta(days=1)).strftime('%Y-%m-%d') %}
+
+          {% for call in calls[:5] %}
+          {% set top = 48 + loop.index0 * 50 %}
+          {% set mid = top + 22 %}
+          {% set tone = 'red' if call.type == 'missed' else 'black' %}
+          {% set spam = call.spam_score and call.spam_score >= 6 %}
+          {# Truncation is by pixel width, so a long name can never run into the date. #}
+          {% set name_width = 238 if spam else 266 %}
+          {% set stamp = as_timestamp(call.timestamp) %}
+          {% set day = stamp | timestamp_custom('%Y-%m-%d') %}
+
+          {% if not loop.first %}
+          ,{"type": "line", "x_start": 18, "x_end": 386, "y_start": {{ top - 4 }}, "fill": "ltgray"}
+          {% endif %}
+
+          {% if call.type == 'missed' %}
+          ,{"type": "rectangle", "x_start": 0, "y_start": {{ top }}, "x_end": 6, "y_end": {{ top + 44 }}, "fill": "red", "outline": "red"}
+          {% elif call.vip %}
+          ,{"type": "rectangle", "x_start": 0, "y_start": {{ top }}, "x_end": 6, "y_end": {{ top + 44 }}, "fill": "yellow", "outline": "yellow"}
+          {% endif %}
+
+          ,{"type": "icon", "value": "{{ call.icon }}", "x": 18, "y": {{ mid }}, "size": 22, "color": "{{ tone }}", "anchor": "lm"}
+          ,{"type": "text", "value": "{{ call.name or call.number }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": true}
+          ,{"type": "text", "value": "{% if call.name %}{{ call.number }}{% else %}Unbekannt{% endif %}", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": 266, "truncate": true}
+
+          {% if spam %}
+          ,{"type": "rectangle", "x_start": 296, "y_start": {{ mid - 19 }}, "x_end": 340, "y_end": {{ mid - 1 }}, "fill": "yellow", "outline": "yellow", "corners": "all", "radius": 4}
+          ,{"type": "text", "value": "SPAM", "x": 318, "y": {{ mid - 10 }}, "size": 12, "color": "black", "anchor": "mm"}
+          {% endif %}
+
+          ,{"type": "text", "value": "{% if day == today %}{{ stamp | timestamp_custom('%H:%M') }}{% elif day == yesterday %}Gestern{% else %}{{ stamp | timestamp_custom('%d.%m.') }}{% endif %}", "x": 386, "y": {{ mid - 9 }}, "size": 17, "anchor": "rm"}
+          ,{"type": "text", "value": "{% if call.duration %}{{ call.duration // 60 }}:{{ '%02d' | format(call.duration % 60) }}{% else %}—{% endif %}", "x": 386, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "rm"}
+          {% endfor %}
+
+          {% if not calls %}
+          ,{"type": "icon", "value": "mdi:phone-off", "x": "50%", "y": 150, "size": 40, "color": "gray", "anchor": "mm"}
+          ,{"type": "text", "value": "Keine Anrufe", "x": "50%", "y": 196, "size": 20, "color": "gray", "anchor": "mm"}
+          {% endif %}
+        ]

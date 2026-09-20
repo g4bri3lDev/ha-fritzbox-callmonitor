@@ -1,0 +1,19 @@
+FRITZ!Box Call Monitor (Home Assistant custom integration)
+Copyright 2026 Gabriel Lackermeier
+
+This product includes software developed as part of Home Assistant
+(https://github.com/home-assistant/core), licensed under the Apache License,
+Version 2.0.
+
+The following files are derived from the core `fritzbox_callmonitor`
+integration and remain under that license:
+
+  custom_components/fritzbox_callmonitor/base.py
+  custom_components/fritzbox_callmonitor/config_flow.py
+  custom_components/fritzbox_callmonitor/sensor.py
+  custom_components/fritzbox_callmonitor/const.py
+  custom_components/fritzbox_callmonitor/strings.json
+  custom_components/fritzbox_callmonitor/icons.json
+  custom_components/fritzbox_callmonitor/translations/en.json
+
+See AGENTS.md (CORE_BASELINE) for the upstream commit they were taken from.

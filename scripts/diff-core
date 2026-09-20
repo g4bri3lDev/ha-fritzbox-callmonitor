@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Diff the vendored core modules against Home Assistant core.
+#
+# This integration overrides the core `fritzbox_callmonitor` domain, so core
+# bugfixes do not reach users unless they are pulled forward by hand. Run this
+# after a core release, review each hunk, and update CORE_BASELINE in AGENTS.md
+# once the diff has been triaged.
+#
+#   scripts/diff-core                    # against the default core checkout
+#   scripts/diff-core /path/to/core      # against another checkout
+
+set -e
+
+cd "$(dirname "$0")/.."
+
+core="${1:-$HOME/Developer/Home_Assistant/core}"
+upstream="$core/homeassistant/components/fritzbox_callmonitor"
+
+if [ ! -d "$upstream" ]; then
+    echo "core checkout not found: $upstream" >&2
+    exit 1
+fi
+
+echo "core is at: $(git -C "$core" log -1 --format='%h %ad %s' --date=short)"
+echo
+
+# Only the files carried over verbatim. Everything else is ours.
+for f in base.py config_flow.py; do
+    diff -u "$upstream/$f" "custom_components/fritzbox_callmonitor/$f" \
+        --label "core/$f" --label "ours/$f" || true
+done
+
+# These diverge by design; show them only as a stat so real core changes stand out.
+echo
+echo "--- diverged by design (review manually) ---"
+for f in __init__.py sensor.py const.py strings.json icons.json; do
+    printf '%-16s %s\n' "$f" \
+        "$(diff "$upstream/$f" "custom_components/fritzbox_callmonitor/$f" | grep -c '^[<>]' || true) changed lines"
+done

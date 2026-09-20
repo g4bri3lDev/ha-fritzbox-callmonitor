@@ -1,0 +1,209 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Gerät ist bereits konfiguriert",
+      "insufficient_permissions": "Der Benutzer hat keine ausreichenden Berechtigungen für die FRITZ!Box-Einstellungen und ihre Telefonbücher.",
+      "no_devices_found": "Keine Geräte im Netzwerk gefunden",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich"
+    },
+    "error": {
+      "insufficient_permissions": "Der Benutzer hat keine ausreichenden Berechtigungen für die FRITZ!Box-Einstellungen und ihre Telefonbücher.",
+      "invalid_auth": "Ungültige Authentifizierung"
+    },
+    "flow_title": "{name}",
+    "step": {
+      "phonebook": {
+        "data": {
+          "phonebook": "Telefonbuch"
+        }
+      },
+      "reauth_confirm": {
+        "data": {
+          "password": "Passwort",
+          "username": "Benutzername"
+        }
+      },
+      "user": {
+        "data": {
+          "host": "Host",
+          "password": "Passwort",
+          "port": "Port",
+          "username": "Benutzername"
+        },
+        "data_description": {
+          "host": "Der Hostname oder die IP-Adresse deiner FRITZ!Box."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "calls": {
+        "name": "Anrufliste {phonebook_name}",
+        "state_attributes": {
+          "calls": {
+            "name": "Anrufe"
+          },
+          "missed_calls": {
+            "name": "Verpasste Anrufe"
+          },
+          "total_calls": {
+            "name": "Anrufe gesamt"
+          }
+        }
+      },
+      "fritzbox_callmonitor": {
+        "name": "Anrufmonitor {phonebook_name}",
+        "state": {
+          "dialing": "Wählt",
+          "idle": "Inaktiv",
+          "ringing": "Klingelt",
+          "talking": "Im Gespräch"
+        },
+        "state_attributes": {
+          "accepted": {
+            "name": "Angenommen"
+          },
+          "closed": {
+            "name": "Beendet"
+          },
+          "device": {
+            "name": "Gerät"
+          },
+          "duration": {
+            "name": "Dauer"
+          },
+          "from": {
+            "name": "Anrufernummer"
+          },
+          "from_name": {
+            "name": "Anrufername"
+          },
+          "initiated": {
+            "name": "Begonnen"
+          },
+          "prefixes": {
+            "name": "Vorwahlen"
+          },
+          "to": {
+            "name": "Angerufene Nummer"
+          },
+          "to_name": {
+            "name": "Angerufener Name"
+          },
+          "type": {
+            "name": "Typ",
+            "state": {
+              "incoming": "Eingehend",
+              "outgoing": "Ausgehend"
+            }
+          },
+          "vip": {
+            "name": "Wichtig"
+          },
+          "with": {
+            "name": "Nummer"
+          },
+          "with_name": {
+            "name": "Name"
+          }
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "Kein FRITZ!Box-Anrufmonitor-Eintrag für {target} gefunden."
+    },
+    "entry_not_loaded": {
+      "message": "Der Eintrag {target} ist nicht geladen."
+    },
+    "lookup_disabled": {
+      "message": "Die Rückwärtssuche ist deaktiviert. Aktiviere zuerst einen Anbieter in den Optionen der Integration."
+    }
+  },
+  "options": {
+    "error": {
+      "malformed_prefixes": "Die Vorwahlen sind fehlerhaft, bitte prüfe das Format."
+    },
+    "step": {
+      "init": {
+        "data": {
+          "history_days": "Zeitraum der Anrufliste",
+          "history_limit": "Anzahl der Anrufe im Attribut",
+          "lookup_provider": "Rückwärtssuche für unbekannte Nummern",
+          "prefixes": "Vorwahlen (kommagetrennte Liste)",
+          "tellows_api_key": "tellows-API-Schlüssel"
+        },
+        "data_description": {
+          "history_days": "Wie viele Tage der FRITZ!Box-Anrufliste gelesen werden.",
+          "history_limit": "Wie viele Anrufe das Attribut `calls` enthält. Für mehr die Aktion get_calls nutzen.",
+          "lookup_provider": "Standardmäßig aus. Wenn aktiviert, werden Nummern, die dein Telefonbuch nicht kennt, zur Namenssuche an diesen Dienst gesendet.",
+          "prefixes": "Vorwahlen, die beim Abgleich einer Nummer mit dem Telefonbuch probiert werden.",
+          "tellows_api_key": "Nur für tellows nötig. Die veröffentlichten Testzugangsdaten sind nicht für den Dauerbetrieb gedacht."
+        },
+        "title": "Anrufmonitor konfigurieren"
+      }
+    }
+  },
+  "selector": {
+    "call_type": {
+      "options": {
+        "all": "Alle",
+        "incoming": "Eingehend",
+        "missed": "Verpasst",
+        "outgoing": "Ausgehend",
+        "rejected": "Abgewiesen"
+      }
+    },
+    "lookup_provider": {
+      "options": {
+        "dasoertliche": "Das Örtliche (kein Schlüssel, liest das öffentliche Telefonbuch aus)",
+        "none": "Deaktiviert",
+        "tellows": "tellows (benötigt API-Schlüssel, liefert einen Spam-Score)"
+      }
+    }
+  },
+  "services": {
+    "get_calls": {
+      "description": "Liest die FRITZ!Box-Anrufliste und gibt sie als Antwortdaten zurück. Nutze dies, wenn du mehr Verlauf brauchst, als das Sensor-Attribut fasst.",
+      "fields": {
+        "call_type": {
+          "description": "Welche Anrufe zurückgegeben werden.",
+          "name": "Anruftyp"
+        },
+        "config_entry_id": {
+          "description": "Die FRITZ!Box, von der gelesen wird.",
+          "name": "Eintrag"
+        },
+        "days": {
+          "description": "Wie weit zurück gelesen wird.",
+          "name": "Tage"
+        },
+        "limit": {
+          "description": "Maximale Anzahl zurückgegebener Anrufe.",
+          "name": "Limit"
+        }
+      },
+      "name": "Anrufe abrufen"
+    },
+    "lookup_number": {
+      "description": "Löst eine einzelne Rufnummer über den konfigurierten Anbieter der Rückwärtssuche auf.",
+      "fields": {
+        "config_entry_id": {
+          "description": "Die FRITZ!Box, deren Sucheinstellungen genutzt werden.",
+          "name": "Eintrag"
+        },
+        "force_refresh": {
+          "description": "Den Cache umgehen und den Anbieter erneut abfragen.",
+          "name": "Neu abfragen"
+        },
+        "number": {
+          "description": "Die nachzuschlagende Rufnummer.",
+          "name": "Nummer"
+        }
+      },
+      "name": "Nummer nachschlagen"
+    }
+  }
+}

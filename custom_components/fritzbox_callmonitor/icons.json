@@ -1,0 +1,25 @@
+{
+  "entity": {
+    "sensor": {
+      "calls": {
+        "default": "mdi:phone-log"
+      },
+      "fritzbox_callmonitor": {
+        "default": "mdi:phone",
+        "state": {
+          "dialing": "mdi:phone-outgoing",
+          "ringing": "mdi:phone-incoming",
+          "talking": "mdi:phone-in-talk"
+        }
+      }
+    }
+  },
+  "services": {
+    "get_calls": {
+      "service": "mdi:phone-log"
+    },
+    "lookup_number": {
+      "service": "mdi:card-account-details-outline"
+    }
+  }
+}
