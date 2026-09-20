@@ -16,5 +16,5 @@
     "fritzconnection[qr]==1.15.1",
     "phonenumbers==9.0.39"
   ],
-  "version": "0.2.0"
+  "version": "0.3.0"
 }
