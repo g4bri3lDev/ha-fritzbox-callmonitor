@@ -95,7 +95,16 @@ actions:
 
           ,{"type": "icon", "value": "{{ call.icon }}", "x": 18, "y": {{ mid }}, "size": 22, "color": "{{ tone }}", "anchor": "lm"}
           ,{"type": "text", "value": "{{ call.name or call.number }}", "x": 48, "y": {{ mid - 9 }}, "size": 19, "color": "{{ tone }}", "anchor": "lm", "max_width": {{ name_width }}, "truncate": true}
-          ,{"type": "text", "value": "{% if call.name %}{{ call.number }}{% else %}Unbekannt{% endif %}", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": 266, "truncate": true}
+          {# A withheld caller has no number at all: the box leaves it empty and
+             puts its own placeholder in the name, so printing the number here
+             would leave a blank line. Seen on 3 of 16 real calls. #}
+          {% if call.number and call.name %}
+          ,{"type": "text", "value": "{{ call.number }}", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": 266, "truncate": true}
+          {% elif not call.number %}
+          ,{"type": "text", "value": "Nummer unterdrückt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
+          {% else %}
+          ,{"type": "text", "value": "Unbekannt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
+          {% endif %}
 
           {% if spam %}
           ,{"type": "rectangle", "x_start": 296, "y_start": {{ mid - 19 }}, "x_end": 340, "y_end": {{ mid - 1 }}, "fill": "yellow", "outline": "yellow", "corners": "all", "radius": 4}

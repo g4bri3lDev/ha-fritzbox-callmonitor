@@ -56,8 +56,8 @@ def _record(**overrides: object) -> dict:
 
 
 # One of each case the layout has to survive: an unknown number, a long VIP
-# name, a spam-scored caller, an outgoing call and a name long enough to be
-# truncated.
+# name, a spam-scored caller, an outgoing call, a withheld caller and a name
+# long enough to be truncated.
 SAMPLE = [
     _record(
         id="9",
@@ -94,6 +94,17 @@ SAMPLE = [
         icon="mdi:phone-outgoing",
         duration=1845,
         timestamp=(NOW - timedelta(days=1)).isoformat(),
+    ),
+    # A withheld caller, exactly as a real FRITZ!Box reports one: no number at
+    # all, and the box's own placeholder in the name field.
+    _record(
+        id="5b",
+        type="missed",
+        number="",
+        name="Unbekannt",
+        name_source="fritzbox",
+        icon="mdi:phone-missed",
+        timestamp=(NOW - timedelta(days=1, hours=4)).isoformat(),
     ),
     _record(
         id="5",

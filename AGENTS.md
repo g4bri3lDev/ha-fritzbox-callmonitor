@@ -122,8 +122,13 @@ get wrong:
 sample data and no Home Assistant, reimplementing those four helpers so it
 renders exactly the shipped text. Run it after touching the template; the images
 in `docs/images/` come from it. The sample data deliberately covers an unknown
-number, a long VIP name, a spam-scored caller, an outgoing call and a name long
-enough to truncate.
+number, a long VIP name, a spam-scored caller, an outgoing call, a withheld
+caller and a name long enough to truncate.
+
+**A withheld caller has an empty `number` and the box's own placeholder in
+`name`** (3 of 16 calls on a real box). `_async_resolve` already skips a record
+with no number, so nothing is looked up for it; templates have to handle it
+too, or they print a blank line where the number goes.
 
 ## Brand assets
 
