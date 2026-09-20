@@ -133,6 +133,10 @@ get wrong:
   "23:50" and start saying "Gestern". For the same reason the header carries
   the date rather than a clock: a clock redrawn daily would sit there lying,
   while a date that is not today is a useful sign that something is stuck.
+- **Say where a name came from.** `name_source` distinguishes the user's own
+  phonebook from a directory's guess, and the blueprint marks the latter with a
+  globe. Treating the two as interchangeable on screen is how a wrong lookup
+  becomes a wrong caller nobody questions.
 - **Never red on black.** The panel's inks are measured, not idealised: black
   `(10, 7, 14)`, white `(173, 178, 174)`, yellow `(172, 128, 0)`, red
   `(85, 24, 14)`. That red is a dark maroon, so against the black header bar it

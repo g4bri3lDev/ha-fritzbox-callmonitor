@@ -68,7 +68,10 @@ It uses all four colors the panel has:
 - **yellow** — a left-edge marker for phonebook VIP contacts (category 1), and a
   `SPAM` badge when tellows scored the caller 6 or higher
 - **gray** — the number under the name, and the duration
-- a dash instead of a duration when nobody picked up
+- a **globe** before the number when the name came from reverse lookup rather
+  than from your own phonebook — a directory's guess and your own contact should
+  not read as equally trustworthy
+- for a missed call, the time it rang where the duration would otherwise be
 
 Names are truncated by pixel width, so a long one can never run into the date
 column. With no calls at all it draws an empty state:

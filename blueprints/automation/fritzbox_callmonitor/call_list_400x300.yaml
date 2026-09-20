@@ -92,6 +92,11 @@ actions:
           {# Truncation is by pixel width, so a long name can never run into the date. #}
           {% set name_width = 238 if spam else 266 %}
           {% set stamp = as_timestamp(call.timestamp) %}
+          {# A name from a directory is a guess, not your own data. Mark it so the
+             two are not read as equally trustworthy. Solid ink and 12px, because
+             a grey glyph this small would dither into nothing. #}
+          {% set looked_up = call.name_source in ('dasoertliche', 'tellows') %}
+          {% set number_x = 64 if looked_up else 48 %}
           {% set day = stamp | timestamp_custom('%Y-%m-%d') %}
 
           {% if not loop.first %}
@@ -116,7 +121,10 @@ actions:
              With no name there is nothing to put here either: the number is
              already the line above, so a second line would only restate it. #}
           {% if call.number and call.name %}
-          ,{"type": "text", "value": "{{ call.number }}", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": 266, "truncate": True}
+          {% if looked_up %}
+          ,{"type": "icon", "value": "mdi:earth", "x": 48, "y": {{ mid + 12 }}, "size": 12, "color": "black", "anchor": "lm"}
+          {% endif %}
+          ,{"type": "text", "value": "{{ call.number }}", "x": {{ number_x }}, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm", "max_width": {{ 266 - (number_x - 48) }}, "truncate": True}
           {% elif not call.number %}
           ,{"type": "text", "value": "Nummer unterdrückt", "x": 48, "y": {{ mid + 12 }}, "size": 14, "color": "gray", "anchor": "lm"}
           {% endif %}
