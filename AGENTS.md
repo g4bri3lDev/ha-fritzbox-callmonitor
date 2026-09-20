@@ -126,6 +126,13 @@ get wrong:
   but is not JSON -- do not "fix" it by validating with `json.loads`, which
   accepts payloads Home Assistant refuses.
 
+- **Redraw as rarely as the content allows.** The tag is battery powered and
+  every redraw is a panel refresh. The blueprint draws on a new call, on Home
+  Assistant start, and once at 00:01 -- that last one only because relative
+  dating goes stale at midnight, when last night's call has to stop saying
+  "23:50" and start saying "Gestern". For the same reason the header carries
+  the date rather than a clock: a clock redrawn daily would sit there lying,
+  while a date that is not today is a useful sign that something is stuck.
 - **Fine detail must use a solid ink.** The 4.1" tag is a BWRY panel -- black,
   white, red, yellow, no grey -- and `drawcustom` error-diffusion dithers
   anything else before sending. A 14px grey label survives that; a 1px grey

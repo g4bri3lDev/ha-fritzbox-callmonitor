@@ -46,9 +46,12 @@ triggers:
     entity_id: !input call_history
   - trigger: homeassistant
     event: start
-  # Keeps the header clock and the "Gestern" labels honest between calls.
-  - trigger: time_pattern
-    minutes: "/30"
+  # Once a day, just after midnight. The only thing that goes stale without a
+  # call is the relative dating -- last night's call has to stop saying "23:50"
+  # and start saying "Gestern". Redrawing more often than that would spend the
+  # tag's battery on a panel refresh that changes nothing.
+  - trigger: time
+    at: "00:01:00"
 
 conditions:
   - condition: template
@@ -68,7 +71,10 @@ actions:
           ,{"type": "text", "value": "Anrufe", "x": 46, "y": 21, "size": 24, "color": "white", "anchor": "lm"}
           ,{"type": "icon", "value": "mdi:phone-missed", "x": 262, "y": 21, "size": 18, "color": "red", "anchor": "lm"}
           ,{"type": "text", "value": "{{ missed }}", "x": 286, "y": 21, "size": 20, "color": "white", "anchor": "lm"}
-          ,{"type": "text", "value": "{{ now().strftime('%H:%M') }}", "x": 386, "y": 21, "size": 15, "color": "white", "anchor": "rm"}
+          {# Today's date, not a clock: the frame is only redrawn daily or on a call,
+             so a clock would sit there lying. The date doubles as a staleness
+             check -- if it is not today, the display or the integration is stuck. #}
+          ,{"type": "text", "value": "{{ now().strftime('%d.%m.') }}", "x": 386, "y": 21, "size": 15, "color": "white", "anchor": "rm"}
 
           {% set today = now().strftime('%Y-%m-%d') %}
           {% set yesterday = (now() - timedelta(days=1)).strftime('%Y-%m-%d') %}
